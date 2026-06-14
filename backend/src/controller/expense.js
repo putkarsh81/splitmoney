@@ -192,4 +192,85 @@ const viewExpense = async (req,res) => {
 
 }
 
-module.exports = {addExpense,viewExpense};
+const balance = async (req,res) => {
+    const group_id = req.params.group_id;
+    const current_user = req.user.id;
+    try{
+        const group_exist = await pool.query(
+        "SELECT * FROM groups WHERE id=$1",[group_id]
+    );
+    if(group_exist.rows.length == 0){
+        return res.status(404).json({
+            msg:"group not found"
+        });
+    }   
+    const user_in_group = await pool.query(
+        "SELECT * FROM group_members WHERE group_id=$1 AND user_id=$2 AND left_at IS NULL",[group_id, current_user]
+    );
+    if(user_in_group.rows.length == 0){
+        return res.status(403).json({
+            msg:"User is not a member of this group"
+        });
+    }
+    const active_member = await pool.query(
+        "SELECT u.user_id, u.username FROM user_details u JOIN group_members gm ON u.user_id = gm.user_id WHERE gm.group_id=$1 AND gm.left_at IS NULL",[group_id]
+    );
+    const balances = [];
+
+    for (const member of active_member.rows) {
+
+    const paidResult = await pool.query(
+        `SELECT COALESCE(SUM(amount),0) AS amount_paid
+         FROM expenses
+         WHERE group_id=$1
+         AND paid_by=$2`,
+        [group_id, member.user_id]
+    );
+
+    const owedResult = await pool.query(
+        `SELECT COALESCE(SUM(es.share_amount),0) AS amount_owed
+         FROM expense_shares es
+         JOIN expenses e
+         ON es.expense_id = e.id
+         WHERE e.group_id=$1
+         AND es.user_id=$2`,
+        [group_id, member.user_id]
+    );
+
+    const amount_paid =
+        Number(paidResult.rows[0].amount_paid);
+
+    const amount_owed =
+        Number(owedResult.rows[0].amount_owed);
+
+    balances.push({
+        user_id: member.user_id,
+        username: member.username,
+        amount_paid,
+        amount_owed,
+        net_balance:
+            Number(
+                (amount_paid - amount_owed)
+                .toFixed(2)
+            )
+    });
+    }
+    balances.sort(
+    (a,b) => b.net_balance - a.net_balance
+);
+    return res.status(200).json({
+    group_id,
+    total_members: balances.length,
+    balances
+});
+
+}
+    catch(err){
+        console.error(err);
+        return res.status(500).json({
+            "msg":"Internal server error"
+        });
+    }
+}
+
+module.exports = {addExpense,viewExpense, balance};
