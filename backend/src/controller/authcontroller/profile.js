@@ -3,15 +3,15 @@ const pool = require("../../db/dbconnection");
 const getProfile = async (req, res) => {
     try {
 
-        const email = req.user.email;
+        const id = req.user.id;
 
         const result = await pool.query(
-            `SELECT username, email
+            `SELECT user_id, username, email
              FROM user_details
-             WHERE email = $1`,
-            [email]
+             WHERE user_id = $1`,
+            [id]
         );
-
+        
         return res.status(200).json(
             result.rows[0]
         );

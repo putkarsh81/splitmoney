@@ -32,8 +32,8 @@ const Loginuser = async (req,res) => {
     }
 
     const token = jwt.sign({
-        id: existingUser.id,
-        email: existingUser.email
+        id: existingUser.user_id,
+        
     },
         process.env.JWT_SECRET, {expiresIn: '1h'});
 
@@ -41,7 +41,7 @@ const Loginuser = async (req,res) => {
         "msg":"Login successful",
         "token": token,
         user: {
-        id: existingUser.id,
+        id: existingUser.user_id,
         username: existingUser.username,
         email: existingUser.email
     }
