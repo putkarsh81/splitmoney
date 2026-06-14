@@ -6,6 +6,7 @@ const path = require('path');
 dotenv.config({ path: path.resolve(__dirname, './.env') });
 const { authmiddleware } = require('./src/middleware/authmiddleware');
 const { createGroup, getAllGroup, removeGroup } = require('./src/controller/groups');
+const { addExpense} = require('./src/controller/expense');
 
 app.use(express.json());
 
@@ -23,6 +24,8 @@ app.post('/groups/addmember/:group_id',authmiddleware,require('./src/controller/
 app.get('/groups/getmembers/:group_id',authmiddleware,require('./src/controller/groups').getGroupMembers);
 
 app.delete('/groups/removemember/:group_id/:user_id',authmiddleware,require('./src/controller/groups').removeMember);
+
+app.post("/expense/add", authmiddleware, addExpense);
 
 app.listen(process.env.PORT || 3000, () => {
     console.log('Server is running on port ' + (process.env.PORT || 3000));
