@@ -72,7 +72,7 @@ const addMember = async (req,res) => {
             msg:"only group creator can add members"
         });
     }    
-    
+
     const user_exists = await pool.query(
         "SELECT * FROM user_details WHERE user_id=$1",[user_id]
     );
@@ -108,4 +108,41 @@ const addMember = async (req,res) => {
         });
     }
 }
-module.exports = {createGroup, getAllGroup, addMember};
+
+const getGroupMembers = async (req,res) => {
+    const group_id = req.params.group_id;
+    const user_id = req.user.id;
+    try{
+        const group_exists = await pool.query(
+            "SELECT * FROM groups WHERE id=$1",[group_id]
+        );
+        if(group_exists.rows.length == 0){
+            return res.status(404).json({
+                msg:"group not found"
+            });
+        }
+
+        const is_member = await pool.query(
+            "SELECT * FROM group_members WHERE group_id=$1 AND user_id=$2 AND left_at IS NULL",[group_id, user_id]
+        );
+        if(is_member.rows.length == 0){
+            return res.status(403).json({
+                msg:"access denied"
+            });
+        }
+        const members = await pool.query(
+            "SELECT u.user_id, u.username, u.email, gm.joined_at FROM user_details u JOIN group_members gm ON u.user_id = gm.user_id WHERE gm.group_id=$1 AND gm.left_at IS NULL",[group_id]
+        );
+        return res.status(200).json({
+            members:members.rows
+        });
+    }catch(err){
+        console.error(err);
+        return res.status(500).json({
+            "msg":"Internal server error"
+        });
+    }
+}
+
+
+module.exports = {createGroup, getAllGroup, addMember, getGroupMembers };
