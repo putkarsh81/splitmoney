@@ -28,6 +28,7 @@ app.delete('/groups/removemember/:group_id/:user_id',authmiddleware,require('./s
 app.post("/expense/add", authmiddleware, addExpense);
 app.get("/groups/:group_id/expense",authmiddleware, require('./src/controller/expense').viewExpense);
 app.get("/groups/:group_id/balance",authmiddleware, require('./src/controller/expense').balance);
+app.get("/groups/:group_id/settleup",authmiddleware, require('./src/controller/expense').settlement);
 
 app.listen(process.env.PORT || 3000, () => {
     console.log('Server is running on port ' + (process.env.PORT || 3000));
