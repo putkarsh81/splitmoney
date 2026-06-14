@@ -138,4 +138,58 @@ const addExpense = async (req,res) => {
 
 }
 
-module.exports = {addExpense};
+const viewExpense = async (req,res) => {
+    const group_id = req.params.group_id;
+    const current_user = req.user.id;
+
+    try{
+        const group_exist = await pool.query(
+        "SELECT * FROM groups WHERE id=$1",[group_id]
+    );
+    if(group_exist.rows.length == 0){
+        return res.status(404).json({
+            msg:"group not found"
+        });
+    }
+
+    const user_in_group = await pool.query(
+        "SELECT * FROM group_members WHERE group_id=$1 AND user_id=$2 AND left_at IS NULL",[group_id, current_user]
+    );
+    if(user_in_group.rows.length == 0){
+        return res.status(403).json({
+            msg:"User is not a member of this group"
+        });
+    }
+
+    const expenses = await pool.query(
+        `SELECT e.id, e.description, e.amount, e.paid_by, ud.username as paid_by_username, e.expense_date,
+        json_agg(json_build_object('user_id', es.user_id, 'username', u.username, 'share_amount', es.share_amount)) AS shares
+        FROM expenses e
+        JOIN expense_shares es ON e.id = es.expense_id
+        JOIN user_details u ON es.user_id = u.user_id
+        JOIN user_details ud ON e.paid_by = ud.user_id
+        WHERE e.group_id = $1
+        GROUP BY e.id, ud.username, e.expense_date`, [group_id]
+    );
+
+    if(expenses.rows.length == 0){
+        return res.status(404).json({
+            msg:"No expenses found for this group"
+        });
+    }
+    
+        return res.status(200).json({
+            expenses: expenses.rows
+        });
+    }catch(err){
+        console.error(err);
+        return res.status(500).json({
+            "msg":"Internal server error"
+        });
+    }
+
+    
+
+}
+
+module.exports = {addExpense,viewExpense};

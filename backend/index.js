@@ -20,12 +20,13 @@ app.post('/login', require('./src/controller/authcontroller/login').Loginuser);
 app.get('/profile', authmiddleware, require('./src/controller/authcontroller/profile').getProfile);
 app.post('/groups/create', authmiddleware, createGroup);
 app.get('/groups/allgroups',authmiddleware, getAllGroup);
-app.post('/groups/addmember/:group_id',authmiddleware,require('./src/controller/groups').addMember);
-app.get('/groups/getmembers/:group_id',authmiddleware,require('./src/controller/groups').getGroupMembers);
+app.post('/groups/:group_id/addmember/',authmiddleware,require('./src/controller/groups').addMember);
+app.get('/groups/:group_id/getmembers',authmiddleware,require('./src/controller/groups').getGroupMembers);
 
 app.delete('/groups/removemember/:group_id/:user_id',authmiddleware,require('./src/controller/groups').removeMember);
 
 app.post("/expense/add", authmiddleware, addExpense);
+app.get("/groups/:group_id/expense",authmiddleware, require('./src/controller/expense').viewExpense);
 
 app.listen(process.env.PORT || 3000, () => {
     console.log('Server is running on port ' + (process.env.PORT || 3000));
