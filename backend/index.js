@@ -21,7 +21,8 @@ app.post('/groups/create', authmiddleware, createGroup);
 app.get('/groups/allgroups',authmiddleware, getAllGroup);
 app.post('/groups/addmember/:group_id',authmiddleware,require('./src/controller/groups').addMember);
 app.get('/groups/getmembers/:group_id',authmiddleware,require('./src/controller/groups').getGroupMembers);
-//app.delete('/groups/remove/:id',authmiddleware,removeGroup);
+
+app.delete('/groups/removemember/:group_id/:user_id',authmiddleware,require('./src/controller/groups').removeMember);
 
 app.listen(process.env.PORT || 3000, () => {
     console.log('Server is running on port ' + (process.env.PORT || 3000));

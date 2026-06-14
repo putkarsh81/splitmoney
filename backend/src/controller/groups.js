@@ -144,5 +144,53 @@ const getGroupMembers = async (req,res) => {
     }
 }
 
+const removeMember = async (req,res) => {
+    const user_id = Number(req.params.user_id);
+    const group_id = Number(req.params.group_id);
+    const current_user_id = req.user.id; 
+    try{
+        const group_exists = await pool.query(
+            "SELECT * FROM groups WHERE id=$1",[group_id]
+        );
+        if(group_exists.rows.length == 0){
+            return res.status(404).json({
+                msg:"group not found"
+            });
+        }
+        if(current_user_id == user_id){
+            return res.status(403).json({
+                msg:"group creator cannot remove themselves from the group"
+            });
+        }
+        
+        if(current_user_id !== group_exists.rows[0].created_by){
+            return res.status(403).json({
+                msg:"only group creator can remove members"
+            });
+        }
 
-module.exports = {createGroup, getAllGroup, addMember, getGroupMembers };
+        const member_exists = await pool.query(
+            "SELECT * FROM group_members WHERE group_id=$1 AND user_id=$2 AND left_at IS NULL",[group_id, user_id]
+        );
+        if(member_exists.rows.length == 0){
+            return res.status(404).json({
+                msg:"member not found in the group"
+            });
+        }
+
+        const result = await pool.query(
+            "UPDATE group_members SET left_at=CURRENT_DATE WHERE group_id=$1 AND user_id=$2 RETURNING *",[group_id, user_id]
+        );
+        return res.status(200).json({
+            msg:"member removed successfully",
+            member:result.rows[0]
+        });
+    }catch(err){
+        console.error(err);
+        return res.status(500).json({   
+        "msg":"Internal server error"
+        });
+    }   
+}
+
+module.exports = {createGroup, getAllGroup, addMember, getGroupMembers, removeMember};
