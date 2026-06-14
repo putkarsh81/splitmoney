@@ -32,6 +32,24 @@ const createGroup = async (req,res) => {
     }
 }
 
+const getAllGroup = async (req,res) => {
+    const user_id = req.user.id;
+
+    try{
+        const result = await pool.query(
+            "SELECT * FROM groups g join group_members gm on g.id = gm.group_id WHERE gm.user_id=$1 AND gm.left_at IS NULL",[user_id]
+        );
+
+        res.status(201).json({
+            groups:result.rows
+        });
+    }catch(err){
+        console.error(err);
+        return res.status(500).json({
+            "msg":"Internal server error"
+        });
+    }
+}
 
 
-module.exports = {createGroup};
+module.exports = {createGroup, getAllGroup};

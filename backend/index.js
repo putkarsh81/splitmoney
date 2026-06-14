@@ -18,7 +18,7 @@ app.post('/register', require('./src/controller/authcontroller/register').regist
 app.post('/login', require('./src/controller/authcontroller/login').Loginuser);
 app.get('/profile', authmiddleware, require('./src/controller/authcontroller/profile').getProfile);
 app.post('/groups/create', authmiddleware, createGroup);
-//app.get('/groups/allgroups',authmiddleware, getAllGroup);
+app.get('/groups/allgroups',authmiddleware, getAllGroup);
 //app.delete('/groups/remove/:id',authmiddleware,removeGroup);
 
 app.listen(process.env.PORT || 3000, () => {
