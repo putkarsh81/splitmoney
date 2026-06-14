@@ -19,6 +19,7 @@ app.post('/login', require('./src/controller/authcontroller/login').Loginuser);
 app.get('/profile', authmiddleware, require('./src/controller/authcontroller/profile').getProfile);
 app.post('/groups/create', authmiddleware, createGroup);
 app.get('/groups/allgroups',authmiddleware, getAllGroup);
+app.post('/groups/addmember/:group_id',authmiddleware,require('./src/controller/groups').addMember);
 //app.delete('/groups/remove/:id',authmiddleware,removeGroup);
 
 app.listen(process.env.PORT || 3000, () => {

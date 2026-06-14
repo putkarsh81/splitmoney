@@ -51,5 +51,61 @@ const getAllGroup = async (req,res) => {
     }
 }
 
+const addMember = async (req,res) => {
+    const user_id = req.body.user_id;
+    const group_id = req.params.group_id;
+    const current_user_id = req.user.id;
 
-module.exports = {createGroup, getAllGroup};
+    try{
+    const group_exists = await pool.query(
+        "SELECT * FROM groups WHERE id=$1",[group_id]
+    );
+
+    if(group_exists.rows.length == 0){
+        return res.status(404).json({
+            msg:"group not found"
+        });
+    }
+
+    if(current_user_id !== group_exists.rows[0].created_by){
+        return res.status(403).json({
+            msg:"only group creator can add members"
+        });
+    }    
+    
+    const user_exists = await pool.query(
+        "SELECT * FROM user_details WHERE user_id=$1",[user_id]
+    );
+
+    if(user_exists.rows.length == 0){
+        return res.status(404).json({
+            msg:"user not found"
+        });
+    }
+
+    const member_exists = await pool.query(
+        "SELECT * FROM group_members WHERE group_id=$1 AND user_id=$2 AND left_at IS NULL   ",[group_id, user_id]
+    );
+
+    if(member_exists.rows.length > 0){
+        return res.status(404).json({
+            msg:"user is already a member of the group"
+        });
+    }
+
+    
+        const result = await pool.query(
+            "INSERT INTO group_members(group_id, user_id, joined_at) VALUES ($1,$2,CURRENT_DATE) RETURNING *", [group_id, user_id]
+        );
+        return res.status(201).json({
+            msg:"member added successfully",
+            member:result.rows[0]
+        });
+    }catch(err){
+        console.error(err);
+        return res.status(500).json({
+            "msg":"Internal server error"
+        });
+    }
+}
+module.exports = {createGroup, getAllGroup, addMember};
